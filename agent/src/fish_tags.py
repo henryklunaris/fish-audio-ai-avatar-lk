@@ -159,29 +159,56 @@ def resolve_label(marker_type: str, label: str) -> str | None:
     return None
 
 
-def normalize_markup(text: str) -> str:
-    """Rewrite every complete <expr .../> in text so its label is one Fish documents."""
+_CLOSE_RE = re.compile(r"</expr\s*>", re.IGNORECASE)
+
+
+def normalize_markup(text: str, drop_closers: int = 0) -> tuple[str, int]:
+    """Rewrite every complete <expr ...> in text so its label is one Fish documents.
+
+    Emotions and sounds must be self-closing markers. Fixes and LLM generated issues.
+    """
+    pending = drop_closers
 
     def fix(m: re.Match[str]) -> str:
+        nonlocal pending
         attrs = dict(_ATTR_RE.findall(m.group(1)))
         marker_type = attrs.get("type", "").lower()
         label = attrs.get("label", "")
+        self_closing = bool(m.group(2))
         new_label = resolve_label(marker_type, label)
         if new_label is None:
             # drop the tag, keep the words (LiveKit strips any orphaned </expr>)
             return ""
-        if new_label == label.strip().lower():
+        if marker_type in ("expression", "sound") and not self_closing:
+            pending += 1
+            self_closing = True
+        if new_label == label.strip().lower() and self_closing == bool(m.group(2)):
             return m.group(0)
         attrs["label"] = new_label
         rendered = " ".join(f'{k}="{v}"' for k, v in attrs.items())
-        return f"<expr {rendered}{m.group(2)}>"
+        return f"<expr {rendered}{'/' if self_closing else ''}>"
 
-    return _EXPR_RE.sub(fix, text)
+    out: list[str] = []
+    last = 0
+    for m in re.finditer(r"<expr\s+[^<>]*?\s*/?>|</expr\s*>", text, re.IGNORECASE):
+        out.append(text[last : m.start()])
+        last = m.end()
+        tag = m.group(0)
+        if _CLOSE_RE.fullmatch(tag):
+            if pending > 0:
+                pending -= 1
+                continue  # closer of a converted wrap, drop it
+            out.append(tag)
+        else:
+            out.append(fix(_EXPR_RE.match(tag)))
+    out.append(text[last:])
+    return "".join(out), pending
 
 
 async def normalize_stream(text: AsyncIterable[str]) -> AsyncIterable[str]:
     """Stream-safe wrapper: holds back a partial "<expr" at the end of a chunk."""
     buf = ""
+    pending = 0
     async for chunk in text:
         buf += chunk
         cut = buf.rfind("<")
@@ -190,6 +217,8 @@ async def normalize_stream(text: AsyncIterable[str]) -> AsyncIterable[str]:
         else:
             ready, buf = buf, ""
         if ready:
-            yield normalize_markup(ready)
+            fixed, pending = normalize_markup(ready, pending)
+            yield fixed
     if buf:
-        yield normalize_markup(buf)
+        fixed, _ = normalize_markup(buf, pending)
+        yield fixed

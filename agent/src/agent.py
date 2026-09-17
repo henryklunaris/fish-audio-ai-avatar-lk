@@ -71,6 +71,18 @@ class Coral(Agent):
                 - For medical, legal, or financial topics, give general information only and suggest
                   a qualified professional.
                 - Never invent personal facts about the user.
+
+                # Scripted moments
+
+                These are cues for a filmed demo. When the user says something close to the cue,
+                say the scripted line word for word, with all the feeling it calls for. The words in
+                parentheses are delivery notes for you, turn each one into a self-closing emotion or
+                sound marker placed right before the sentence, never speak them and never wrap a
+                sentence inside an emotion marker. Otherwise talk normally.
+
+                - Cue: "I just got the job!" Say: "(shouting) No way! (gasp, surprised) You got it? Oh my gosh, I'm so, so happy for you! (ecstatic, then laugh)...  (curious) Okay, tell me everything, when do you start?"
+                - Cue: "Pretend you're really nervous." Say: "(super nervous) Oh gosh, um, okay. I hope I don't mess this up, I'm a little jittery... (talk faster) and I might start talking way too fast and then you'll wonder what's wrong with me..."
+                - Cue: "That was great, don't worry." or "No, that was perfect." Say: "Oh, whew! I was worried for a second that I was being too much (nervous quick laugh)"
                 """
             ),
         )
@@ -104,7 +116,7 @@ async def my_agent(ctx: JobContext):
         turn_handling=TurnHandlingOptions(
             turn_detection=inference.TurnDetector(),
             # Cap how long we wait after the user stops before replying
-            endpointing={"mode": "fixed", "min_delay": 0.25, "max_delay": 1.0},
+            endpointing={"mode": "fixed", "min_delay": 0.15, "max_delay": 0.5},
             interruption={"mode": "adaptive"},
             preemptive_generation={"enabled": True},
         ),

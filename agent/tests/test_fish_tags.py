@@ -2,7 +2,12 @@
 
 import pytest
 
-from fish_tags import EMOTIONS, SOUNDS, normalize_markup, normalize_stream
+from fish_tags import EMOTIONS, SOUNDS, normalize_stream
+from fish_tags import normalize_markup as _normalize_markup
+
+
+def normalize_markup(text: str) -> str:
+    return _normalize_markup(text)[0]
 
 
 def test_documented_labels_pass_through() -> None:
@@ -54,3 +59,25 @@ def test_blocked_labels_are_dropped() -> None:
     assert "<expr" not in out and "Ugh." in out
     out = normalize_markup('<expr type="prosody" label="whispering">psst</expr>')
     assert "<expr " not in out and "psst" in out
+
+
+def test_wrapped_emotion_becomes_self_closing() -> None:
+    out = normalize_markup(
+        '<expr type="expression" label="ecstatic">Oh my gosh!</expr> Next.'
+    )
+    assert out == '<expr type="expression" label="ecstatic"/>Oh my gosh! Next.'
+
+
+def test_wrapped_tone_is_untouched() -> None:
+    text = '<expr type="prosody" label="shouting">No way!</expr>'
+    assert normalize_markup(text) == text
+
+
+@pytest.mark.asyncio
+async def test_wrap_closer_in_later_chunk_is_dropped() -> None:
+    async def chunks():
+        for c in ['<expr type="sound" label="laughing">', "ha ha", "</expr> ok"]:
+            yield c
+
+    out = "".join([c async for c in normalize_stream(chunks())])
+    assert out == '<expr type="sound" label="laughing"/>ha ha ok'
