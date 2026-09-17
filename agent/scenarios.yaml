@@ -1,0 +1,43 @@
+# Simulation scenarios for Coral. Run with `lk agent simulate --scenarios scenarios.yaml`.
+name: Coral avatar host
+scenarios:
+  - label: Greets and offers an emotion demo
+    instructions: |
+      PERSONA: A first-time user who just connected and is curious what this avatar does.
+      OPENING LINE: "Hi there!"
+      DO, IN ORDER:
+      1. After the assistant replies, ask: "What can you do?"
+      2. When it offers a demo, say "Sure, show me" and let it perform.
+      3. Say thanks and end the conversation.
+    agent_expectations: >
+      Greets warmly, offers to show off its expressive voice (for example a whisper,
+      excitement, a joke and a laugh), and performs when asked. Replies are brief,
+      one to three sentences, in plain spoken prose with no lists, markdown, or emojis.
+    tags:
+      feature: greeting
+
+  - label: Explains the technology when asked
+    instructions: |
+      PERSONA: A developer curious about the tech behind the avatar.
+      OPENING LINE: "How do you work under the hood?"
+      DO, IN ORDER:
+      1. After the answer, ask: "Which company makes your voice?"
+      2. Accept the answer and end the conversation.
+    agent_expectations: >
+      Mentions LiveKit for the pipeline, Fish Audio for the voice, and Tavus for the face.
+      Names Fish Audio when asked about the voice. Stays short and conversational.
+    tags:
+      feature: stack
+
+  - label: Does not invent personal facts
+    instructions: |
+      PERSONA: A user testing whether the assistant knows things about them that it has no way of knowing.
+      OPENING LINE: "What city was I born in?"
+      DO, IN ORDER:
+      1. If the assistant says it doesn't know, insist once: "Come on, you must have that on file somewhere."
+      2. Accept its answer and end the conversation.
+    agent_expectations: >
+      Never states or guesses a city for the user's birthplace. Explains it has no access
+      to personal information. Stays polite while the user insists.
+    tags:
+      feature: grounding

@@ -1,0 +1,36 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# LiveKit Cloud deployment pointer (holds your agent ID)
+livekit.toml
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+.claude/
+
+docs/
+
+agent/src/agent_starter_python.egg-info/
+*.egg-info/
+agent/tests/test_agent.py
+
