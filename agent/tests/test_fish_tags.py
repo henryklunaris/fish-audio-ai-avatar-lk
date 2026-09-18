@@ -81,3 +81,23 @@ async def test_wrap_closer_in_later_chunk_is_dropped() -> None:
 
     out = "".join([c async for c in normalize_stream(chunks())])
     assert out == '<expr type="sound" label="laughing"/>ha ha ok'
+
+
+@pytest.mark.asyncio
+async def test_trailing_sound_marker_is_dropped() -> None:
+    async def chunks():
+        for c in ["Oh, whew! I was worried ", '<expr type="sound" label="laughing"/>']:
+            yield c
+
+    out = "".join([c async for c in normalize_stream(chunks())])
+    assert out == "Oh, whew! I was worried "
+
+
+@pytest.mark.asyncio
+async def test_marker_followed_by_words_in_next_chunk_is_kept() -> None:
+    async def chunks():
+        for c in ["Okay. ", '<expr type="sound" label="laughing"/>', " Tell me more."]:
+            yield c
+
+    out = "".join([c async for c in normalize_stream(chunks())])
+    assert out == 'Okay. <expr type="sound" label="laughing"/> Tell me more.'

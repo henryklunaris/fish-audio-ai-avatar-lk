@@ -205,9 +205,25 @@ def normalize_markup(text: str, drop_closers: int = 0) -> tuple[str, int]:
     return "".join(out), pending
 
 
+# Self-closing emotion/sound markers (plus whitespace) sitting at the very end of text
+_TRAILING_RE = re.compile(
+    r'(?:\s*<expr\s+[^<>]*type="(?:expression|sound)"[^<>]*/>)+\s*$', re.IGNORECASE
+)
+
+
+def strip_trailing_markers(text: str) -> tuple[str, str]:
+    """Split text into (speakable, trailing markers) so a bare tag never reaches Fish."""
+    m = _TRAILING_RE.search(text)
+    if not m:
+        return text, ""
+    return text[: m.start()], text[m.start() :]
+
+
 async def normalize_stream(text: AsyncIterable[str]) -> AsyncIterable[str]:
-    """Stream-safe wrapper: holds back a partial "<expr" at the end of a chunk."""
+    """Stream-safe wrapper: holds back a partial "<expr" at the end of a chunk.
+    """
     buf = ""
+    held = ""
     pending = 0
     async for chunk in text:
         buf += chunk
@@ -218,7 +234,12 @@ async def normalize_stream(text: AsyncIterable[str]) -> AsyncIterable[str]:
             ready, buf = buf, ""
         if ready:
             fixed, pending = normalize_markup(ready, pending)
-            yield fixed
+            speak, held = strip_trailing_markers(held + fixed)
+            if speak:
+                yield speak
     if buf:
         fixed, _ = normalize_markup(buf, pending)
-        yield fixed
+        speak, held = strip_trailing_markers(held + fixed)
+        if speak:
+            yield speak
+    # anything still held is a marker with no words after it, drop it
