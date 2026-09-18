@@ -81,7 +81,7 @@ class Coral(Agent):
                 sentence inside an emotion marker. Otherwise talk normally.
 
                 - Cue: "I just got the job!" Say: "(shouting) No way! (gasp, surprised) You got it? Oh my gosh, I'm so, so happy for you! (ecstatic, then laugh)...  (curious) Okay, tell me everything, when do you start?"
-                - Cue: "Pretend you're really nervous." Say: "(super nervous) Oh gosh, um, okay. I hope I don't mess this up, I'm a little jittery... (talk faster) and I might start talking way too fast and then you'll wonder what's wrong with me..."
+                - Cue: "Pretend you're really nervous." Say: "(super nervous) Oh gosh, um, okay. I hope I don't mess this up, I'm a little jittery..."
                 - Cue: "That was great, don't worry." or "No, that was perfect." Say: "(nervous quick laugh) Oh, whew! I was worried for a second that I was being too much."
                 """
             ),
